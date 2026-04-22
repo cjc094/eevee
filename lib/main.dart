@@ -190,6 +190,29 @@ Future<void> playCry(Eeveelution eevee) async {
   await player.play(AssetSource('audio/${eevee.num}.mp3'));
 }
 
+Color typeColor(String type) {
+  switch (type) {
+    case '水':
+      return Colors.blue;
+    case '火':
+      return Colors.deepOrange;
+    case '雷':
+      return Colors.amber;
+    case '草':
+      return Colors.green;
+    case '冰':
+      return Colors.lightBlue;
+    case '惡':
+      return Colors.blueGrey;
+    case '妖精':
+      return const Color.fromARGB(255, 238, 132, 181);
+    case '超能力':
+      return const Color.fromARGB(255, 199, 125, 196);
+    default:
+      return Colors.brown;
+  }
+}
+
 class EeveeCard extends StatelessWidget {
   const EeveeCard({super.key, required this.eevee});
 
@@ -198,11 +221,14 @@ class EeveeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: typeColor(eevee.type), width: 2),
+      ),
       clipBehavior: Clip.antiAlias,
       elevation: 4,
       child: InkWell(
-        onTap: () async {
-          await playCry(eevee);
+        onTap: () {
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -213,7 +239,12 @@ class EeveeCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Expanded(child: Image.asset(eevee.imgUrl, fit: BoxFit.cover)),
+            Expanded(
+              child: Hero(
+                tag: eevee.name,
+                child: Image.asset(eevee.imgUrl, fit: BoxFit.cover),
+              ),
+            ),
             Padding(
               padding: const EdgeInsets.all(8),
               child: Column(
@@ -227,7 +258,20 @@ class EeveeCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text(eevee.type, style: const TextStyle(fontSize: 14)),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: typeColor(eevee.type),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      eevee.type,
+                      style: const TextStyle(color: Colors.white, fontSize: 12),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -248,20 +292,32 @@ class EeveeListTile extends StatelessWidget {
     return Card(
       elevation: 3,
       child: ListTile(
-        leading: InkWell(
-          onTap: () async {
-            await playCry(eevee);
-          },
-          child: Image.asset(
-            eevee.imgUrl,
-            width: 50,
-            height: 50,
-            fit: BoxFit.cover,
-          ),
+        leading: Image.asset(
+          eevee.imgUrl,
+          width: 50,
+          height: 50,
+          fit: BoxFit.cover,
         ),
         title: Text(eevee.name),
-        subtitle: Text(eevee.type),
-        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+        subtitle: Text(
+          eevee.type,
+          style: TextStyle(
+            color: typeColor(eevee.type),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.volume_up),
+              onPressed: () async {
+                await playCry(eevee);
+              },
+            ),
+            const Icon(Icons.arrow_forward_ios, size: 16),
+          ],
+        ),
         onTap: () {
           Navigator.push(
             context,
@@ -312,23 +368,60 @@ class EeveeGallerySection extends StatelessWidget {
       ),
       itemBuilder: (context, index) {
         final eevee = items[index];
-        return Card(
-          elevation: 4,
-          shape: RoundedRectangleBorder(
+        return Container(
+          decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.amber.withOpacity(0.25),
+                blurRadius: 10,
+                spreadRadius: 1,
+              ),
+            ],
           ),
-          clipBehavior: Clip.antiAlias,
-          child: InkWell(
-            onTap: () async {
-              await playCry(eevee);
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => EeveeDetailPage(eevee: eevee),
-                ),
-              );
-            },
-            child: Image.asset(eevee.imgUrl, fit: BoxFit.cover),
+          child: Card(
+            elevation: 4,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: const BorderSide(color: Colors.amber, width: 1.5),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => EeveeDetailPage(eevee: eevee),
+                  ),
+                );
+              },
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: Hero(
+                      tag: eevee.name,
+                      child: Image.asset(eevee.imgUrl, fit: BoxFit.cover),
+                    ),
+                  ),
+                  Positioned(
+                    top: 6,
+                    right: 6,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.35),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.auto_awesome,
+                        color: Colors.amber,
+                        size: 18,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         );
       },
@@ -339,7 +432,6 @@ class EeveeGallerySection extends StatelessWidget {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -369,67 +461,112 @@ class MyHomePage extends StatelessWidget {
           title: const Text('伊布家族'),
           bottom: const TabBar(
             tabs: [
-              Tab(text: '首頁'),
-              Tab(text: '進化型'),
-              Tab(text: '色違'),
+              Tab(icon: Icon(Icons.home), text: '首頁'),
+              Tab(icon: Icon(Icons.list), text: '進化型'),
+              Tab(icon: Icon(Icons.auto_awesome), text: '色違'),
             ],
           ),
         ),
-        body: TabBarView(
-          children: [
-            // 首頁：
-            SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    SizedBox(
-                      height: 200,
-                      child: InkWell(
-                        onTap: () async {
-                          await playCry(baseEevee);
-                        },
-                        child: Image.asset(
-                          baseEevee.imgUrl,
-                          fit: BoxFit.contain,
+        body: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Color(0xFFFFF3E0), Color(0xFFFFFFFF)],
+            ),
+          ),
+          child: TabBarView(
+            children: [
+              SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      SizedBox(
+                        height: 200,
+                        child: InkWell(
+                          onTap: () {
+                            showDialog(
+                              context: context,
+                              builder: (context) {
+                                return Dialog(
+                                  child: InteractiveViewer(
+                                    child: Image.asset(baseEevee.imgUrl),
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                          child: Image.asset(
+                            baseEevee.imgUrl,
+                            fit: BoxFit.contain,
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    Center(
-                      child: Text(
-                        baseEevee.name,
-                        style: const TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
+                      const SizedBox(height: 16),
+                      Center(
+                        child: Text(
+                          baseEevee.name,
+                          style: const TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Center(
-                      child: Text(
-                        '屬性：${baseEevee.type}',
+                      const SizedBox(height: 8),
+                      Center(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.volume_up),
+                              onPressed: () async {
+                                await playCry(baseEevee);
+                              },
+                            ),
+                            const Text('播放叫聲'),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Center(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text('屬性：'),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: typeColor(baseEevee.type),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                baseEevee.type,
+                                style: const TextStyle(color: Colors.white),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        baseEevee.description,
                         style: const TextStyle(fontSize: 16),
+                        textAlign: TextAlign.center,
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      baseEevee.description,
-                      style: const TextStyle(fontSize: 16),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
 
-            // 進化型（List）
-            EeveeListSection(items: evolutions),
-
-            // 色違（畫廊）
-            EeveeGallerySection(items: shinyEevees),
-          ],
+              EeveeListSection(items: evolutions),
+              EeveeGallerySection(items: shinyEevees),
+            ],
+          ),
         ),
       ),
     );
@@ -453,10 +590,25 @@ class EeveeDetailPage extends StatelessWidget {
             children: [
               Center(
                 child: InkWell(
-                  onTap: () async {
-                    await playCry(eevee);
+                  onTap: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) {
+                        return Dialog(
+                          child: InteractiveViewer(
+                            child: Hero(
+                              tag: eevee.name,
+                              child: Image.asset(eevee.imgUrl),
+                            ),
+                          ),
+                        );
+                      },
+                    );
                   },
-                  child: Image.asset(eevee.imgUrl, height: 220),
+                  child: Hero(
+                    tag: eevee.name,
+                    child: Image.asset(eevee.imgUrl, height: 220),
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -468,11 +620,196 @@ class EeveeDetailPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 8),
-              Text('屬性：${eevee.type}'),
+              Text(
+                '圖鑑編號：#${eevee.num.toString().padLeft(4, '0')}',
+                style: const TextStyle(fontSize: 16, color: Colors.black54),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.volume_up),
+                    onPressed: () async {
+                      await playCry(eevee);
+                    },
+                  ),
+                  const Text('播放叫聲'),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  const Text('屬性：'),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: typeColor(eevee.type),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      eevee.type,
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.06),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Card(
+                  elevation: 0,
+                  margin: EdgeInsets.zero,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                      color: Colors.white.withOpacity(0.92),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: typeColor(eevee.type).withOpacity(0.12),
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(20),
+                              topRight: Radius.circular(20),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.menu_book,
+                                color: typeColor(eevee.type),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                '介紹',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: typeColor(eevee.type),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Text(
+                            eevee.description,
+                            style: const TextStyle(
+                              fontSize: 15,
+                              height: 1.6,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
               const SizedBox(height: 12),
-              Text('介紹：${eevee.description}'),
-              const SizedBox(height: 12),
-              Text('進化方式：${eevee.evolutionMethod ?? '基礎型態'}'),
+
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.06),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Card(
+                  elevation: 0,
+                  margin: EdgeInsets.zero,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                      color: Colors.white.withOpacity(0.92),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: typeColor(eevee.type).withOpacity(0.16),
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(20),
+                              topRight: Radius.circular(20),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(Icons.bolt, color: typeColor(eevee.type)),
+                              const SizedBox(width: 8),
+                              Text(
+                                '進化方式',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: typeColor(eevee.type),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 10,
+                            ),
+                            decoration: BoxDecoration(
+                              color: typeColor(eevee.type).withOpacity(0.08),
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: Text(
+                              eevee.evolutionMethod ?? '基礎型態',
+                              style: const TextStyle(
+                                fontSize: 15,
+                                height: 1.5,
+                                color: Colors.black87,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         ),
