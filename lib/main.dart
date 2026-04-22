@@ -229,10 +229,18 @@ class EeveeCard extends StatelessWidget {
       elevation: 4,
       child: InkWell(
         onTap: () {
+          final currentItems = eevee.isShiny == true ? shinyEevees : eevees;
+          final currentIndex = currentItems.indexWhere(
+            (e) => e.name == eevee.name,
+          );
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => EeveeDetailPage(eevee: eevee),
+              builder: (context) => EeveeDetailPage(
+                eevee: eevee,
+                items: currentItems,
+                currentIndex: currentIndex,
+              ),
             ),
           );
         },
@@ -319,10 +327,18 @@ class EeveeListTile extends StatelessWidget {
           ],
         ),
         onTap: () {
+          final currentItems = eevee.isShiny == true ? shinyEevees : eevees;
+          final currentIndex = currentItems.indexWhere(
+            (e) => e.name == eevee.name,
+          );
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => EeveeDetailPage(eevee: eevee),
+              builder: (context) => EeveeDetailPage(
+                eevee: eevee,
+                items: currentItems,
+                currentIndex: currentIndex,
+              ),
             ),
           );
         },
@@ -388,10 +404,20 @@ class EeveeGallerySection extends StatelessWidget {
             clipBehavior: Clip.antiAlias,
             child: InkWell(
               onTap: () {
+                final currentItems = eevee.isShiny == true
+                    ? shinyEevees
+                    : eevees;
+                final currentIndex = currentItems.indexWhere(
+                  (e) => e.name == eevee.name,
+                );
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => EeveeDetailPage(eevee: eevee),
+                    builder: (context) => EeveeDetailPage(
+                      eevee: eevee,
+                      items: currentItems,
+                      currentIndex: currentIndex,
+                    ),
                   ),
                 );
               },
@@ -574,12 +600,23 @@ class MyHomePage extends StatelessWidget {
 }
 
 class EeveeDetailPage extends StatelessWidget {
-  const EeveeDetailPage({super.key, required this.eevee});
+  const EeveeDetailPage({
+    super.key,
+    required this.eevee,
+    this.items,
+    this.currentIndex,
+  });
 
   final Eeveelution eevee;
+  final List<Eeveelution>? items;
+  final int? currentIndex;
 
   @override
   Widget build(BuildContext context) {
+    final hasItems = items != null && currentIndex != null;
+    final hasPrevious = hasItems && currentIndex! > 0;
+    final hasNext = hasItems && currentIndex! < items!.length - 1;
+
     return Scaffold(
       appBar: AppBar(title: Text(eevee.name)),
       body: SingleChildScrollView(
@@ -810,6 +847,54 @@ class EeveeDetailPage extends StatelessWidget {
                   ),
                 ),
               ),
+              if (hasItems) ...[
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: hasPrevious
+                            ? () {
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => EeveeDetailPage(
+                                      eevee: items![currentIndex! - 1],
+                                      items: items,
+                                      currentIndex: currentIndex! - 1,
+                                    ),
+                                  ),
+                                );
+                              }
+                            : null,
+                        icon: const Icon(Icons.arrow_back),
+                        label: const Text('上一頁'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: hasNext
+                            ? () {
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => EeveeDetailPage(
+                                      eevee: items![currentIndex! + 1],
+                                      items: items,
+                                      currentIndex: currentIndex! + 1,
+                                    ),
+                                  ),
+                                );
+                              }
+                            : null,
+                        icon: const Icon(Icons.arrow_forward),
+                        label: const Text('下一頁'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ],
           ),
         ),
